@@ -1,0 +1,303 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace task
+{
+    public class Token
+    {
+        public string Type { get; set; } // Тип токена
+        public string Value { get; set; } // Значение токена
+        public int Number { get; set; } //Номер токена
+        public string Oper { get; set; }
+
+        public Token(string type, string value, int number = -1)
+        {
+            Type = type;
+            Value = value;
+            Number = number;
+        }
+
+        public Token(string type, string oper, string value, int number = -1)
+        {
+            Type = type;
+            Oper = oper;
+            Value = value;
+            Number = number;
+        }
+
+        public override string ToString()
+        {
+            return $"({Type}, {Number})";
+        }
+    }
+
+    public class LexAnaliz
+    {
+        public LexAnaliz()
+        { }
+
+
+        enum State { S, I, H, R, D } // Состояния: S - начальное, I - идентификатор, H - шестнадцатеричное число, R - разделитель, D - десятичное число
+
+        // Проверка, является ли символ английской буквой
+        private static bool IsEnglishLetter(char c)
+        {
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        }
+
+        // Проверка, является ли символ шестнадцатеричной цифрой
+        private static bool IsHexDigit(char c)
+        {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+        }
+
+        // Проверка, является ли символ десятичной цифрой
+        private static bool IsDecimalDigit(char c)
+        {
+            return (c >= '0' && c <= '9');
+        }
+
+        // Проверка, является ли символ пробелом
+        private static bool IsWhiteSpace(char c)
+        {
+            return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+        }
+
+        // Проверка, является ли символ буквой или цифрой
+        private static bool IsLetterOrDigit(char c)
+        {
+            return IsEnglishLetter(c) || IsHexDigit(c);
+        }
+
+        // Проверка, является ли начало строки шестнадцатеричным числом
+        private static bool IsHexDigitStart(string inputString, int index)
+        {
+            return inputString[index] == '0' && index + 1 < inputString.Length && (inputString[index + 1] == 'x' || inputString[index + 1] == 'X');
+        }
+
+        //                                            0       1       2      3       4
+        private static readonly string[] SlWord = { "main", "int", "long", "for", "return" }; // Служебные слова //SW
+                                //                         0    1    2    3    4    5    6    7    8 
+        private static readonly string[] SingleRazdel = { "(", ")", "{", "}", ",", ";", "*", "/", "%" }; // Одиночные разделители //R
+                                //                       9    10   11   12   13   14     
+        private static readonly string[] ParnRazdel = { "+", "-", ">", "<", "=", "!" }; // Потенциально парные разделители  //R
+                                //                      15    16    17    18    19     20 
+        private static readonly string[] TwoRazdel = { "++", "--", "<=", ">=", "==", "!=" }; // Составные разделители //R
+
+        // Таблицы для хранения идентификаторов и литералов
+        public static readonly List<string> Identifiers = new List<string>();
+        public static readonly List<string> Literals = new List<string>();
+
+        public void Error(int kod, int index, ListBox listBox3)//обработчик ошибок
+        {
+            string errorMessage = $"Лексическая ошибка #{kod} на позиции {index}: ";
+
+            switch (kod)
+            {
+                case -1:
+                    errorMessage = "Лексических ошибок нет";
+                    break;
+                case 50:
+                    errorMessage += "Неизвестный символ";
+                    break;
+                default:
+                    errorMessage += "Неизвестная лексическая  ошибка";
+                    break;
+            }
+            // Выводим ошибку в ListBox3
+            if (listBox3 != null)
+            {
+                listBox3.Items.Add(errorMessage);
+            }
+            else
+            {
+                Console.WriteLine(errorMessage);
+            }
+        }
+
+
+        public static List<Token> InterpString(string inputString, ListBox listBox3)
+        {
+            List<Token> Tokens = new List<Token>(); // Список для хранения токенов
+
+            var l = new LexAnaliz();
+            int y = 0;
+            Identifiers.Clear();
+            Literals.Clear();
+
+            State state = State.S; // Начальное состояние
+            string buffer = ""; // Буфер для накопления символов
+            int repeatState = 1; // Флаг для повторной обработки состояния
+
+            for (int i = 0; i < inputString.Length; i++)
+            {
+                char c = inputString[i]; // Текущий символ
+
+                if (repeatState == 1) repeatState = 0; // Сброс флага повторной обработки
+
+                for (int j = -1; j < repeatState; ++j)
+                {
+                    switch (state)
+                    {
+                        case State.S:
+                            if (IsEnglishLetter(c))
+                            {// Переход в состояние идентификатора
+                                state = State.I;
+                                buffer += c;
+                            }
+                            else if (IsHexDigitStart(inputString, i))
+                            {// Переход в состояние шестнадцатеричного числа
+                                state = State.H;
+                                buffer += c;
+                            }
+                            else if (IsDecimalDigit(c))
+                            {// Переход в состояние десятичного числа
+                                state = State.D;
+                                buffer += c;
+                            }
+                            else if (IsWhiteSpace(c)) { } // Игнорирование пробелов
+
+                            else if (SingleRazdel.Contains(c.ToString()))
+                            {  // Добавление одиночного разделителя
+                                Tokens.Add(new Token("R", c.ToString(), Array.IndexOf(SingleRazdel, c.ToString())));
+                            }
+                            else if (ParnRazdel.Contains(c.ToString()))
+                            { // Переход в состояние разделителя, в случае, если он парный
+                                state = State.R;
+                                buffer += c;
+                            }
+                            else
+                            { l.Error(50, i, listBox3); y++; }
+                            break;
+
+                        case State.I:
+                            if (IsLetterOrDigit(c)) 
+                            {
+                                if (buffer.Length < 7)//индефикатор длинной до 7 символов
+                                {
+                                    buffer += c;
+                                }
+                            } // Накопление символов идентификатора
+                            else
+                            {
+                                if (SlWord.Contains(buffer))
+                                {
+                                    Tokens.Add(new Token("SW", buffer, Array.IndexOf(SlWord, buffer)));
+                                }
+                                else
+                                {
+                                    if (!Identifiers.Contains(buffer))
+                                    {
+                                        Identifiers.Add(buffer);
+                                    }
+                                    Tokens.Add(new Token("ID", buffer, Identifiers.IndexOf(buffer)));
+                                }
+                                buffer = "";
+                                state = State.S;
+                                repeatState = 1;
+                            }
+                            break;
+
+
+                        case State.H:
+                            if (buffer == "0" && (c == 'x' || c == 'X')) { buffer += c; } // Накопление шестнадцатеричного числа
+                            else if (IsHexDigit(c)) { buffer += c; }
+                            else
+                            {
+                                if (!Literals.Contains(buffer))
+                                {
+                                    Literals.Add(buffer);
+                                }
+                                int decimalValue = Convert.ToInt32(buffer, 16);
+                                Tokens.Add(new Token("L", decimalValue.ToString(), Literals.IndexOf(buffer)));
+                                buffer = "";
+                                state = State.S;
+                                repeatState = 1;
+                            }
+                            break;
+
+
+                        case State.D:
+                            if (IsDecimalDigit(c)) { buffer += c; } // Накопление десятичного числа
+                            else
+                            {
+                                if (!Literals.Contains(buffer))
+                                {
+                                    Literals.Add(buffer);
+                                }
+                                Tokens.Add(new Token("L", buffer, Literals.IndexOf(buffer)));
+                                buffer = "";
+                                state = State.S;
+                                repeatState = 1;
+                            }
+                            break;
+
+
+                        case State.R:
+                            if (TwoRazdel.Contains(buffer + c))
+                            { // Накопление парного разделителя
+                                buffer += c;
+                            }
+                            else
+                            {// Добавление парного разделителя
+                                if (buffer.Length > 1)
+                                    Tokens.Add(new Token("R", buffer, Array.IndexOf(TwoRazdel, buffer) + 15));
+                                else
+                                    Tokens.Add(new Token("R", buffer, Array.IndexOf(ParnRazdel, buffer) + 9));
+                                buffer = "";
+                                state = State.S;
+                                repeatState = 1;
+                            }
+                            break;
+                    }
+                }
+            }
+
+            // Добавление последнего накопленного буфера, если он не пустой
+            if (buffer != "")
+            {
+                switch (state)
+                {
+                    case State.I:
+                        if (SlWord.Contains(buffer))
+                        {
+                            Tokens.Add(new Token("SW", buffer, Array.IndexOf(SlWord, buffer)));
+                        }
+                        else
+                        {
+                            if (!Identifiers.Contains(buffer))
+                            {
+                                Identifiers.Add(buffer);
+                            }
+                            Tokens.Add(new Token("ID", buffer, Identifiers.IndexOf(buffer)));
+                        }
+                        break;
+                    case State.H:
+                    case State.D:
+                        if (!Literals.Contains(buffer))
+                        {
+                            Literals.Add(buffer);
+                        }
+                        Tokens.Add(new Token("L", buffer, Literals.IndexOf(buffer)));
+                        break;
+
+                    case State.R:
+                        if (buffer.Length > 1)
+                            Tokens.Add(new Token("R", buffer, Array.IndexOf(TwoRazdel, buffer) + 15));
+                        else
+                            Tokens.Add(new Token("R", buffer, Array.IndexOf(ParnRazdel, buffer) + 9));
+                        break;
+                }
+            }
+
+            if(y == 0)
+            {
+                l.Error(-1, 0, listBox3);
+            }
+            return Tokens; // Возвращаем список токенов
+        }
+
+    }
+}
