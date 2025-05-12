@@ -1,0 +1,1351 @@
+using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
+
+namespace task
+{
+
+    public class SintacsisLL
+    {
+        int index;//переменная для хранения индекса
+        private ListBox listBox;
+        private ListBox listBox2;
+        private ListView listView2;
+        private ListView listView3;
+        List<Token> Tokens;
+        private static int operationCounter = 0; // Счётчик операций
+
+        int iden = 0;   //все для семант проверки на объявления
+        int[] masType = new int[10];
+        List<string> mas = LexAnaliz.Identifiers;
+
+        List<Token> stekPer = new List<Token>(100);
+        int inPer = -1;
+        List<Token> stekOper = new List<Token>(100);
+        int inOper = -1;
+        List<Token> dopPer = new List<Token>(10);
+        int inDop = -1;
+        Token temp = new Token("","",-1);
+        int[] znach = new int[100];
+        int inZnach = 0;
+        string mess = " ";
+
+        //для генерации
+        string op1, op, op2;//простая логика
+        string OpID, opi; //икремент декремент
+        public SintacsisLL(List<Token> tokens, ListBox listBox = null, ListBox listBox2 = null, ListView listView2=null, ListView listView3 = null)
+        {
+            this.listBox = listBox;
+            this.listBox2 = listBox2;
+            this.listView2 = listView2;
+            this.listView3 = listView3;
+
+            Tokens = tokens;
+
+            for (int i = 0; i < masType.Length; i++)
+            {
+                masType[i] = -1;
+            }
+
+            int x = prog();//вызываем самую первую программу
+        }
+
+        private void Error(int kod, int index)//обработчик ошибок
+        {
+            string errorMessage = $"Синтаксическая ошибка #{kod} на позиции {index}: ";
+
+            switch (kod)
+            {
+                case -1:
+                    errorMessage = "Синтаксических ошибок нет";
+                    break;
+                case 0:
+                    errorMessage += "Ожидалось ключевое слово 'main'";
+                    break;
+                case 3:
+                    errorMessage += "Ожидалось ключевое слово 'for'";
+                    break;
+                case 9:
+                    errorMessage += "Ожидались 'int', 'long', 'for', '++', '--', индификатор";
+                    break;
+                case 10:
+                    errorMessage += "Ожидалась открывающая скобка '('";
+                    break;
+                case 11:
+                    errorMessage += "Ожидалась закрывающая скобка ')'";
+                    break;
+                case 12:
+                    errorMessage += "Ожидалась открывающая фигурная скобка '{'";
+                    break;
+                case 13:
+                    errorMessage += "Ожидалась закрывающая фигурная скобка '}'";
+                    break;
+                case 14:
+                    errorMessage += "Ожидались операторы ';', ')', '+', '-'";
+                    break;
+                case 15:
+                    errorMessage += "Ожидалась точка с запятой ';'";
+                    break;
+                case 16:
+                    errorMessage += "Ожидались операторы '*', '/', '%', '+', '-', ';', ')'";
+                    break;
+                case 17:
+                    errorMessage += "Ожидались операторы '*', '/', '%')";
+                    break;
+                case 19:
+                    errorMessage += "Ожидался оператор сложения (+ или -)";
+                    break;
+                case 25:
+                    errorMessage += "Ожидался оператор инкремента/декремента (++ или --)";
+                    break;
+                case 30:
+                    errorMessage += "Ожидались операторы '>','>','<=', '>=','==', '!='";
+                    break;
+                case 31:
+                    errorMessage += "Ожидался идентификатор";
+                    break;
+                case 32:
+                    errorMessage += "Ожидались индефикатор или литерал";
+                    break;
+                default:
+                    errorMessage += "Неизвестная синтаксическая ошибка";
+                    break;
+            }
+
+            // Добавляем информацию о текущем токене
+            if (index < Tokens.Count)
+            {
+                errorMessage += $". Обнаружено: {GetRussianTokenType(Tokens[index].Type)}";
+                if (!string.IsNullOrEmpty(Tokens[index].Value))
+                {
+                    errorMessage += $" '{Tokens[index].Value}'";
+                }
+            }
+            else
+            {
+                errorMessage += ". Достигнут конец входных данных";
+            }
+
+
+            // Выводим ошибку в ListBox
+            if (listBox != null)
+            {
+                listBox.Items.Add(errorMessage);
+            }
+            else
+            {
+                Console.WriteLine(errorMessage);
+            }
+        }
+
+        private string GetRussianTokenType(string type)
+        {
+            switch (type)
+            {
+                case "SW":
+                    return "ключевое слово";
+                case "R":
+                    return "оператор";
+                case "ID":
+                    return "идентификатор";
+                case "L":
+                    return "литерал";
+                default:
+                    return type;
+            }
+        }
+
+        private void Error2(int kod, int index)//обработчик ошибок
+        {
+            string errorMessage = $"Семантическая ошибка #{kod}";
+
+            switch (kod)
+            {
+                case -1:
+                    errorMessage = "Семантических ошибок нет";
+                    break;
+                case 40:
+                    errorMessage += "Ошибка объявления";
+                    break;
+                case 41:
+                    errorMessage += "Ошибка объявления: имеются не объявленные переменные";
+                    break;
+                default:
+                    errorMessage += "Неизвестная семантическая ошибка";
+                    break;
+            }
+            // Выводим ошибку в ListBox2
+            if (listBox2 != null)
+            {
+                listBox2.Items.Add(errorMessage);
+            }
+            else
+            {
+                Console.WriteLine(errorMessage);
+            }
+        }
+
+        public int prog()
+        {
+            int kod = -1;
+            index = 0;
+
+            if (!(Tokens[index].Type == "SW" && Tokens[index].Number == 0))//main
+            {
+                Error(0, index); return 0;
+            }
+            index++;
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 0))//(
+            {
+                Error(10, index); return 10;
+            }
+            index++;
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 1))//)
+            {
+                Error(11, index); return 11;
+            }
+            index++;
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 2))//{
+            {
+                Error(12, index); return 12;
+            }
+            index++;
+
+            kod = spis_oper(ref index);
+            if (kod >= 0) return kod;
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 3))//}
+            {
+                Error(13, index); return 13;
+            }
+            index++;
+            index++;
+            Error(-1, index);
+
+            int i = 0;
+            while (i < mas.Count)
+            {
+                if (masType[i] != -1) i++;
+                else
+                {
+                    Error2(41, index);
+                    return 41;
+                }
+            }
+            Error2(-1, index);
+            return -1;//ошибка в случае успеха
+        }
+
+
+
+        private int spis_oper(ref int index)
+        {
+            int kod = oper(ref index);
+            if (kod >= 0)
+                return kod;
+
+            kod = X(ref index);
+            return kod;
+        }
+
+        private int oper(ref int index)
+        {
+
+            int kod = -1;
+            // Проверка для int id <V>;
+            if (Tokens[index].Type == "SW" && Tokens[index].Number == 1) // int
+            {
+                mess += Tokens[index].Value + " ";
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                mess += Tokens[index].Value + " ";
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                if (masType[mas.IndexOf(Tokens[index].Value)] == -1)//проверка на наличие индификатора                                                           
+                {                                                   //в списках и его объявление
+                    masType[iden] = 1;
+                    iden++;
+                }
+                else
+                {
+                    Error2(40, index); return 40;
+                }
+                temp = Tokens[index];
+
+
+                index++;
+                kod = V(ref index);
+                if (kod >= 0) return kod;
+
+
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для long id <V>;
+            if (Tokens[index].Type == "SW" && Tokens[index].Number == 2) // long
+            {
+                mess += Tokens[index].Value+" ";
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                mess += Tokens[index].Value + " ";
+
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                if (masType[mas.IndexOf(Tokens[index].Value)] == -1)//проверка на наличие индификатора                                                           
+                {                                                   //в списках и его объявление
+                    masType[iden] = 2;
+                    iden++;
+                }
+                else
+                {
+                    Error2(40, index); return 40;
+                }
+                temp = Tokens[index];
+
+
+                index++;
+                kod = V(ref index);
+                if (kod >= 0) return kod;
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для ++id;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 15) // ++
+            {
+                OpID = Tokens[index].Value;
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                opi = Tokens[index].Number.ToString();
+                IkrementDicrement(opi, OpID);
+
+                index++;
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для --id;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 16) // --
+            {
+                OpID = Tokens[index].Value;
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                opi = Tokens[index].Number.ToString();
+                IkrementDicrement(opi, OpID);
+                index++;
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для id<B>;
+            if (Tokens[index].Type == "ID") //id
+            {
+                mess += Tokens[index].Value + " ";
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                opi = Tokens[index].Number.ToString();
+
+                temp = Tokens[index];
+                index++;
+                kod = B(ref index);
+                if (kod >= 0) return kod;
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для <цикл>
+            if (Tokens[index].Type == "SW" && Tokens[index].Number == 3) // for
+            {
+                kod = cicl(ref index);
+                return kod;
+            }
+
+            Error(9, index); return 9;
+        }
+
+        private int X(ref int index)
+        {
+            //проверка на эпсилон
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 3) // }
+                return -1;
+
+            int kod = spis_oper(ref index);
+            if (kod >= 0) return kod;
+
+            return -1;
+        }
+
+        private int B(ref int index)
+        {
+            int kod = -1;
+            //Проверка для = <выр>
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 13) // =
+            {
+                mess += Tokens[index].Value + " ";
+
+                stekOper.Add(Tokens[index]);
+                inOper++;
+                index++;
+
+                kod = bir(ref index);
+                listView3.Items.Add("Присваивание значения:" + mess);// Добавляем строку в listView2
+                mess = " ";
+
+                znach[temp.Number] = int.Parse(stekPer[inPer].Value);
+                inZnach++;
+
+                var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                        // Добавляем подэлементы (остальные столбцы)
+
+                if (stekPer[inPer-1].Oper != null)
+                    newItem.SubItems.Add(stekPer[inPer-1].Oper);  // Второй столбец (столбец 1)
+                else
+                    newItem.SubItems.Add(stekPer[inPer-1].Value);  // Второй столбец (столбец 1)
+                
+                if (inDop >= 0)
+                    newItem.SubItems.Add(dopPer[inDop].Oper); // Третий столбец (столбец 2)
+                else
+                    newItem.SubItems.Add(stekPer[inPer].Value.ToString()); // Третий столбец (столбец 2)
+
+                newItem.SubItems.Add(" ");  //четвертый столбец результат                                      
+                listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                
+
+                inPer = -1;
+                inOper = -1;
+                inDop = -1;
+                dopPer.Clear();
+                stekPer.Clear();
+                stekOper.Clear();
+                if (kod >= 0) return kod;
+            }
+            else
+            {
+                kod = A(ref index);
+                return kod;
+            }
+            return -1;
+        }
+
+        private int V(ref int index)
+        {
+            int kod = -1;
+            //закрытие эпсилона ;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 5) // ;
+            {
+                mess += Tokens[index].Value;
+                listView3.Items.Add("Объявление переменной:" + mess);
+                mess = " ";
+                return -1;
+            }
+
+            //Проверка на = <выр>
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 13) // =
+            {
+                mess += Tokens[index].Value + " ";
+
+                stekOper.Add(Tokens[index]);
+                inOper++;
+
+                index++;
+                kod = bir(ref index);
+
+                listView3.Items.Add("Объявление переменной с присваиванием значения:" + mess);
+                mess = " ";
+
+                var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                        // Добавляем подэлементы (остальные столбцы)
+
+                if (stekPer[inPer - 1].Oper != null)
+                    newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                else
+                    newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                if (inDop >= 0)
+                    newItem.SubItems.Add(dopPer[inDop].Oper); // Третий столбец (столбец 2)
+                else
+                    newItem.SubItems.Add(stekPer[inPer].Value.ToString()); // Третий столбец (столбец 2)
+
+
+                newItem.SubItems.Add(" ");  //четвертый столбец результат                                      
+                listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+
+
+                znach[temp.Number] = (int.Parse(stekPer[inPer].Value));
+                inZnach++;
+
+                inPer = -1;
+                inOper = -1;
+                inDop = -1;
+                dopPer.Clear();
+                stekPer.Clear();
+                stekOper.Clear();
+                if (kod >= 0) return kod;
+            }
+            return -1;
+        }
+
+
+
+        private int A(ref int index)
+        {
+            int kod = -1;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 15) // ++
+            {
+                mess += Tokens[index].Value + " ";
+                listView3.Items.Add("Инкремент:" + mess);
+                mess = " ";
+                OpID = Tokens[index].Value;
+                IkrementDicrement(opi, OpID);
+                index++;
+                return -1;
+            }
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 16) // --
+            {
+                mess += Tokens[index].Value + " ";
+                listView3.Items.Add("Декремент:" + mess);
+                mess = " ";
+                OpID = Tokens[index].Value;
+                IkrementDicrement(opi, OpID);
+                index++;
+                return -1;
+            }
+
+            Error(25, index); return 25;
+        }
+
+        private int bir(ref int index)
+        {
+            int kod = slag(ref index);
+            if (kod >= 0)
+                return kod;
+
+            kod = Y(ref index);
+            return kod;
+        }
+
+        private int Y(ref int index)
+        {
+            int kod = -1;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 5 || Tokens[index].Number == 1) // ; )
+                return -1;
+
+            if (Tokens[index].Type == "R" && (Tokens[index].Number == 9 || Tokens[index].Number == 10))//+ -
+            {
+                kod = bir2(ref index);
+                return kod;
+            }
+
+            Error(14, index); return 14;
+        }
+
+        private int bir2(ref int index)
+        {
+            int kod = -1;
+
+            mess += Tokens[index].Value + " ";
+
+            stekOper.Add(Tokens[index]);
+            inOper++;
+
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 9) // +
+            {
+                index++;
+
+                kod = slag(ref index);
+                if (kod >= 0) return kod;
+
+                if (stekOper[inOper].Value == "+")
+                {
+                    operationCounter++;
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) + int.Parse(stekPer[inPer].Value)).ToString(), inDop)); 
+
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L",$"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) + znach[stekPer[inPer].Number]).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L",$"M{operationCounter}", (znach[stekPer[inPer-1].Number] + int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L",$"M{operationCounter}", (znach[stekPer[inPer-1].Number] + znach[stekPer[inPer].Number]).ToString(), inDop));
+                    inDop++;
+
+                    if (masType[stekPer[inPer - 1].Number] == 2 || masType[stekPer[inPer].Number] == 2) listView3.Items.Add("Приведение к типу long");
+
+
+                    var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                       // Добавляем подэлементы (остальные столбцы)
+
+                    if(stekPer[inPer - 1].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                    if(stekPer[inPer].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer].Oper); // Третий столбец (столбец 2)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer].Value); // Третий столбец (столбец 2)
+
+                    newItem.SubItems.Add(dopPer[inDop].Oper);  //четвертый столбец результат                                      
+                    listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                    stekPer.RemoveAt(inPer);
+                    stekPer.RemoveAt(inPer-1);
+                    stekOper.RemoveAt(inOper);
+
+                    inPer--;
+                    inOper--;
+
+                    stekPer.Add(dopPer[inDop]);
+                    
+                }
+
+                kod = Y(ref index);
+                return kod;
+            }
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 10) // -
+            {
+                index++;
+
+                kod = slag(ref index);
+                if (kod >= 0) return kod;
+
+                if (stekOper[inOper].Value == "-")
+                {
+                    operationCounter++;
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) - int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) - znach[stekPer[inPer].Number]).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] - int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] - znach[stekPer[inPer].Number]).ToString(), inDop));
+                    inDop++;
+                    if (masType[stekPer[inPer - 1].Number] == 2 || masType[stekPer[inPer].Number] == 2) listView3.Items.Add("Приведение к типу long");
+
+
+                    var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                            // Добавляем подэлементы (остальные столбцы)
+                    if (stekPer[inPer - 1].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                    if (stekPer[inPer].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer].Oper); // Третий столбец (столбец 2)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer].Value); // Третий столбец (столбец 2)
+                    
+                    newItem.SubItems.Add(dopPer[inDop].Oper);  //четвертый столбец результат                                      
+                    listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                    stekPer.RemoveAt(inPer);
+                    stekPer.RemoveAt(inPer - 1);
+                    stekOper.RemoveAt(inOper);
+
+                    inPer--;
+                    inOper--;
+
+                    stekPer.Add(dopPer[inDop]);
+                }
+
+                kod = Y(ref index);
+                return kod;
+            }
+
+            Error(19, index); return 19;
+        }
+
+        private int slag(ref int index)
+        {
+            int kod = fact(ref index);
+            if (kod >= 0)
+                return kod;
+
+            kod = Z(ref index);
+            return kod;
+        }
+
+        private int Z(ref int index)
+        {
+            int kod = -1;
+            if (Tokens[index].Type == "R" && (Tokens[index].Number == 6 || Tokens[index].Number == 7 || Tokens[index].Number == 8)) // * / %
+            {
+                kod = slag2(ref index);
+                return kod;
+            }
+            if (Tokens[index].Type == "R" && (Tokens[index].Number == 9 || Tokens[index].Number == 10 || Tokens[index].Number == 5 || Tokens[index].Number == 1)) // + - ; )
+                return -1;
+
+            Error(16, index); return 16;
+        }
+
+        private int slag2(ref int index)
+        {
+            int kod = -1;
+
+            mess += Tokens[index].Value + " ";
+
+            stekOper.Add(Tokens[index]);
+            inOper++;
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 6) // *
+            {
+                index++;
+
+                kod = fact(ref index);
+                if (kod >= 0) return kod;
+
+                if (stekOper[inOper].Value == "*")
+                {
+                    operationCounter++;
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) * int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) * znach[stekPer[inPer].Number]).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] * int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] * znach[stekPer[inPer].Number]).ToString(), inDop));
+                    inDop++;
+                    if (masType[stekPer[inPer - 1].Number] == 2 || masType[stekPer[inPer].Number] == 2) listView3.Items.Add("Приведение к типу long");
+
+                    var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                            // Добавляем подэлементы (остальные столбцы)
+                    if (stekPer[inPer - 1].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                    if (stekPer[inPer].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer].Oper); // Третий столбец (столбец 2)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer].Value); // Третий столбец (столбец 2)
+
+                    newItem.SubItems.Add(dopPer[inDop].Oper);  //четвертый столбец результат                                      
+                    listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                    stekPer.RemoveAt(inPer);
+                    stekPer.RemoveAt(inPer - 1);
+                    stekOper.RemoveAt(inOper);
+
+                    inPer--;
+                    inOper--;
+
+                    stekPer.Add(dopPer[inDop]);
+                }
+
+                kod = Z(ref index);
+                return kod;
+            }
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 7) // /
+            {
+                index++;
+
+                kod = fact(ref index);
+                if (kod >= 0) return kod;
+
+                if (stekOper[inOper].Value == "/")
+                {
+                    operationCounter++;
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) / int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) / znach[stekPer[inPer].Number]).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] / int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] / znach[stekPer[inPer].Number]).ToString(), inDop));
+                    inDop++;
+                    if (masType[stekPer[inPer - 1].Number] == 2 || masType[stekPer[inPer].Number] == 2) listView3.Items.Add("Приведение к типу long");
+
+                    var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                            // Добавляем подэлементы (остальные столбцы)
+                    if (stekPer[inPer - 1].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                    if (stekPer[inPer].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer].Oper); // Третий столбец (столбец 2)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer].Value); // Третий столбец (столбец 2)
+                    newItem.SubItems.Add(dopPer[inDop].Oper);  //четвертый столбец результат                                      
+                    listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                    stekPer.RemoveAt(inPer);
+                    stekPer.RemoveAt(inPer - 1);
+                    stekOper.RemoveAt(inOper);
+
+                    inPer--;
+                    inOper--;
+
+                    stekPer.Add(dopPer[inDop]);
+                }
+
+                kod = Z(ref index);
+                return kod;
+            }
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 8) // %
+            {
+                index++;
+
+                kod = fact(ref index);
+                if (kod >= 0) return kod;
+
+                if (stekOper[inOper].Value == "%")
+                {
+                    operationCounter++;
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) % int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "L" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (int.Parse(stekPer[inPer - 1].Value) % znach[stekPer[inPer].Number]).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "L")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] % int.Parse(stekPer[inPer].Value)).ToString(), inDop));
+
+                    if (stekPer[inPer - 1].Type == "ID" && stekPer[inPer].Type == "ID")
+                        dopPer.Add(new Token("L", $"M{operationCounter}", (znach[stekPer[inPer - 1].Number] % znach[stekPer[inPer].Number]).ToString(), inDop));
+                    inDop++;
+                    if (masType[stekPer[inPer - 1].Number] == 2 || masType[stekPer[inPer].Number] == 2) listView3.Items.Add("Приведение к типу long");
+
+                    var newItem = new ListViewItem(stekOper[inOper].Value); // Первый столбец (столбец 0)
+                                                                            // Добавляем подэлементы (остальные столбцы)
+                    if (stekPer[inPer - 1].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer - 1].Oper);  // Второй столбец (столбец 1)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer - 1].Value);  // Второй столбец (столбец 1)
+
+                    if (stekPer[inPer].Oper != null)
+                        newItem.SubItems.Add(stekPer[inPer].Oper); // Третий столбец (столбец 2)
+                    else
+                        newItem.SubItems.Add(stekPer[inPer].Value); // Третий столбец (столбец 2)
+                    newItem.SubItems.Add(dopPer[inDop].Oper);  //четвертый столбец результат                                      
+                    listView2.Items.Add(newItem);// Добавляем строку в listView2
+
+                    stekPer.RemoveAt(inPer);
+                    stekPer.RemoveAt(inPer - 1);
+                    stekOper.RemoveAt(inOper);
+
+                    inPer--;
+                    inOper--;
+
+                    stekPer.Add(dopPer[inDop]);
+                }
+
+                kod = Z(ref index);
+                return kod;
+            }
+
+            Error(17, index); return 17;
+        }
+
+        private int fact(ref int index)
+        {
+            int kod = -1;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 0) // (
+            {
+                mess += Tokens[index].Value + " ";
+
+                index++;
+                kod = bir(ref index);
+                if (kod >= 0) return kod;
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 1)) // )
+                {
+                    Error(11, index); return 11;
+                }
+                mess += Tokens[index].Value + " ";
+
+                index++;
+                return -1;
+            }
+            else
+            {
+                mess += Tokens[index].Value + " ";
+
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                kod = elem(ref index);
+                if (kod >= 0) return kod;
+            }
+
+            return -1;
+        }
+
+
+
+        private int elem(ref int index)
+        {
+
+            if (!(Tokens[index].Type == "ID" || Tokens[index].Type == "L")) // id или lit
+            {
+                Error(32, index); return 32;
+            }
+            index++;
+
+            return -1;
+        }
+
+        private int cicl(ref int index)
+        {
+            if (!(Tokens[index].Type == "SW" && Tokens[index].Number == 3)) // for
+            {
+                Error(3, index); return 3;
+            }
+            index++;
+
+            listView3.Items.Add("Начало цикла for");
+
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 0)) // (
+            {
+                Error(10, index); return 10;
+            }
+            index++;
+
+            int kod = arif_cicl(ref index);
+            if (kod >= 0) return kod;
+
+            int indexEnd = 0;
+            begin:
+            
+            int indexStart = index;
+            kod = prost_log(ref index);
+            if (kod >= 0) return kod;
+
+            bool ycl = CompareValues(op1, op, op2);
+            if (ycl == false) goto end;
+
+            kod = ikdek_cicle(ref index);
+            if (kod >= 0) return kod;
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 1)) // )
+            {
+                Error(11, index); return 11;
+            }
+            index++;
+
+            kod = bloc(ref index);
+            if (kod >= 0) return kod;
+
+            indexEnd = index;
+            IkrementDicrement(opi, OpID);
+            index = indexStart;
+            goto begin;
+            end:
+
+            index = indexEnd;
+            listView3.Items.Add("Конец цикла for");
+            return -1;
+        }
+
+        private int arif_cicl(ref int index)
+        {
+            int kod = -1;
+            string mes;
+            
+            listView3.Items.Add("  Начальное значение переменной");
+            // Проверка для int id <V>;
+            if (Tokens[index].Type == "SW" && Tokens[index].Number == 1) // int
+            {
+                mes = Tokens[index].Value +" ";
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                temp = Tokens[index];
+                mes += Tokens[index].Value+ " ";
+
+                if (masType[mas.IndexOf(Tokens[index].Value)] == -1)//проверка на наличие индификатора                                                           
+                {                                                   //в списках и его объявление
+                    masType[iden] = 1;
+                    iden++;
+                }
+                else
+                {
+                    Error2(40, index); return 40;
+                }
+
+                index++;
+                kod = V(ref index);
+                if (kod >= 0) return kod;
+                mes += "=" + znach[inZnach - 1].ToString();
+                listView3.Items.Add("   " + mes);
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для long id <V>;
+            if (Tokens[index].Type == "SW" && Tokens[index].Number == 2) // long
+            {
+                mes = Tokens[index].Value + " ";
+
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                temp = Tokens[index];
+                mes += Tokens[index].Value + " ";
+
+
+                if (masType[mas.IndexOf(Tokens[index].Value)] == -1)//проверка на наличие индификатора                                                           
+                {                                                   //в списках и его объявление
+                    masType[iden] = 2;
+                    iden++;
+                }
+                else
+                {
+                    Error2(40, index); return 40;
+                }
+
+                index++;
+                kod = V(ref index);
+                if (kod >= 0) return kod;
+                mes += "=" + znach[inZnach - 1].ToString();
+                listView3.Items.Add("   "+mes);
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            // Проверка для id<B>;
+            if (Tokens[index].Type == "ID") //id
+            {
+                stekPer.Add(Tokens[index]);
+                inPer++;
+
+                temp = Tokens[index];
+                mes = Tokens[index].Value + " ";
+
+                index++;
+                kod = B(ref index);
+                if (kod >= 0) return kod;
+                mes += "=" + znach[inZnach - 1].ToString();
+                listView3.Items.Add("   "+mes);
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+                return -1;
+            }
+
+            if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+            {
+                Error(15, index); return 15;
+            }
+            index++;
+            listView3.Items.Add("   Значение не задано");
+            return -1;
+        }
+
+        private int prost_log(ref int index)
+        {
+            listView3.Items.Add("  Условие выхода из цикла");
+            string mes;
+
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 5) // ;
+            {
+                listView3.Items.Add("   Условие не задано");
+                return -1;
+            }
+            else
+            {
+                mes = Tokens[index].Value + " ";
+                if(Tokens[index].Type == "L")
+                    op1 = Tokens[index].Value;
+                else
+                    op1 = znach[Tokens[index].Number].ToString();
+                int kod = elem(ref index);
+                if (kod >= 0) return kod;
+
+
+                mes += Tokens[index].Value + " ";
+                op = Tokens[index].Value;
+                kod = log_deisiv(ref index);
+                if (kod >= 0) return kod;
+
+
+
+                mes += Tokens[index].Value;
+                listView3.Items.Add("   "+mes);
+                if (Tokens[index].Type == "L")
+                    op2 = Tokens[index].Value;
+                else
+                    op2 = znach[Tokens[index].Number].ToString();
+                kod = elem(ref index);
+                if (kod >= 0) return kod;
+                
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+                {
+                    Error(15, index); return 15;
+                }
+                index++;
+            }
+
+            return -1;
+        }
+
+        private int log_deisiv(ref int index)
+        {
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 11)) // >
+            {
+                index++;
+                return -1;
+            }
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 12)) // <
+            {
+                index++;
+                return -1;
+            }
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 18)) // >=
+            {
+                index++;
+                return -1;
+            }
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 17)) // <=
+            {
+                index++;
+                return -1;
+            }
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 19)) // ==
+            {
+                index++;
+                return -1;
+            }
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 20)) // !=
+            {
+                index++;
+                return -1;
+            }
+
+            index++;
+            Error(30, index); return 30;
+
+        }
+
+        private int ikdek_cicle(ref int index)
+        {
+            listView3.Items.Add("  Изменение переменной");
+            string mes;
+
+            int kod = -1;
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 1) // )
+            {
+                listView3.Items.Add("   Условие не задано");
+                return -1;
+
+            }
+
+            // Проверка для ++id
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 15) // ++
+            {
+                mes = Tokens[index].Value + " ";
+                OpID = Tokens[index].Value;
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                mes += Tokens[index].Value;
+                opi = Tokens[index].Number.ToString();
+                listView3.Items.Add("   " + mes);
+                index++;
+                return -1;
+            }
+
+            // Проверка для --id
+            if (Tokens[index].Type == "R" && Tokens[index].Number == 16) // --
+            {
+                mes = Tokens[index].Value + " ";
+                OpID = Tokens[index].Value;
+                index++;
+                if (!(Tokens[index].Type == "ID")) // id
+                {
+                    Error(31, index); return 31;
+                }
+                mes += Tokens[index].Value;
+
+                opi = Tokens[index].Number.ToString();
+                listView3.Items.Add("   " + mes);
+                index++;
+                return -1;
+            }
+
+            // Проверка для id<B>
+            if (Tokens[index].Type == "ID") //id
+            {
+                mes = Tokens[index].Value + " ";
+                opi = Tokens[index].Number.ToString();
+                index++;
+                mes += Tokens[index].Value;
+                OpID = Tokens[index].Value;
+                kod = B(ref index);
+                listView3.Items.Add("   " + mes);
+                return kod;
+            }
+
+            index++;
+            return -1;
+        }
+
+        private int bloc(ref int index)
+        {
+            int kod = -1;
+            if ((Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
+            {
+                index++;
+                return -1;
+            }
+            else if (Tokens[index].Type == "R" && Tokens[index].Number == 2) // {
+            {
+                index++;
+                kod = spis_oper(ref index);
+                if (kod >= 0) return kod;
+
+                if (!(Tokens[index].Type == "R" && Tokens[index].Number == 3)) // }
+                {
+                    Error(13, index); return 13;
+                }
+                index++;
+                return -1;
+            }
+            else
+            {
+                kod = oper(ref index);
+                return kod;
+            }
+        }
+
+        public static bool CompareValues(string op1, string op, string op2)
+        {
+            // Сначала пробуем распарсить как long
+            if (long.TryParse(op1, out long l1) && long.TryParse(op2, out long l2))
+            {
+                switch (op)
+                {
+                    case "==": return l1 == l2;
+                    case "!=": return l1 != l2;
+                    case ">": return l1 > l2;
+                    case "<": return l1 < l2;
+                    case ">=": return l1 >= l2;
+                    case "<=": return l1 <= l2;
+                }
+            }
+            // Если не получилось как long, пробуем int
+            else if (int.TryParse(op1, out int i1) && int.TryParse(op2, out int i2))
+            {
+                switch (op)
+                {
+                    case "==": return i1 == i2;
+                    case "!=": return i1 != i2;
+                    case ">": return i1 > i2;
+                    case "<": return i1 < i2;
+                    case ">=": return i1 >= i2;
+                    case "<=": return i1 <= i2;
+                }
+            }
+            return true;
+        }
+
+        public void IkrementDicrement(string number, string operation)
+        {
+
+            // Выполнение операции
+            switch (operation)
+            {
+                case "++":
+                    znach[int.Parse(number)] = znach[int.Parse(number)]+1;
+                    break;
+                case "--":
+                    znach[int.Parse(number)] = znach[int.Parse(number)] -1;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
