@@ -14,15 +14,23 @@ namespace task
     public partial class Form1 : Form
 
     {
+        /// <summary>
+        /// Поле списка токенов, получаемых после лекскического анализа
+        /// </summary>
         List<Token> tokens;
+        /// <summary>
+        /// Поле экземпляр синтаксического анализатора
+        /// </summary>
         private SintacsisLL sintacsisLL;
 
-
+        ///
         public Form1()
         {
             InitializeComponent();
         }
-        // Метод для выполнения лексического анализа и отображения результата в ListView
+        /// <summary>
+        /// Метод, выполняющий полный анализ исходного кода
+        /// </summary>
         private void AnalyzeText()
         {
             // Очистка ListView перед добавлением новых данных
@@ -59,11 +67,20 @@ namespace task
             sintacsisLL = new SintacsisLL(tokens, listBox1, listBox2, listView2, listView3);
         }
 
+        /// <summary>
+        /// Метод обработчик события клика на кнопку “Анализировать” 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button1_Click(object sender, EventArgs e)
         {
             AnalyzeText(); // Выполняем лексический анализ
         }
-
+        /// <summary>
+        /// Метод обработчик события клика на кнопку “Загрузить файл” 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void button2_Click(object sender, EventArgs e)
         {
             // Открытие диалога выбора файла
@@ -95,3 +112,5 @@ namespace task
         }
     }
 }
+
+
