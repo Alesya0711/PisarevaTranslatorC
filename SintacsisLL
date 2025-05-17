@@ -7,32 +7,109 @@ namespace task
 
     public class SintacsisLL
     {
-        int index;//переменная для хранения индекса
+        /// <summary>
+        /// Поле индекса текущего токена
+        /// </summary>
+        int index;
+        /// <summary>
+        /// Поле списка для вывода синтаксических ошибок
+        /// </summary>
         private ListBox listBox;
+        /// <summary>
+        /// Поле списка для вывода семантических ошибок
+        /// </summary>
         private ListBox listBox2;
+        /// <summary>
+        /// Поле списка для вывода результатов операций
+        /// </summary>
         private ListView listView2;
+        /// <summary>
+        /// Поле списка для вывода сообщений о выполнении программы
+        /// </summary>
         private ListView listView3;
+        /// <summary>
+        /// Поле списка токенов для анализа
+        /// </summary>
         List<Token> Tokens;
-        private static int operationCounter = 0; // Счётчик операций
+        /// <summary>
+        /// Поле статического счётчика операций
+        /// </summary>
+        private static int operationCounter = 0;
 
-        int iden = 0;   //все для семант проверки на объявления
+        /// <summary>
+        /// Поле индекса для семантической проверки на объявления
+        /// </summary>
+        int iden = 0;
+        /// <summary>
+        /// Поле массива типов идентификаторов
+        /// </summary>
         int[] masType = new int[10];
+        /// <summary>
+        /// Поле списка идентификаторов
+        /// </summary>
         List<string> mas = LexAnaliz.Identifiers;
 
+        /// <summary>
+        /// Поле стека операндов
+        /// </summary>
         List<Token> stekPer = new List<Token>(100);
+        /// <summary>
+        /// Поле индекса стека операндов
+        /// </summary>
         int inPer = -1;
+        /// <summary>
+        /// Поле стека операторов
+        /// </summary>
         List<Token> stekOper = new List<Token>(100);
+        /// <summary>
+        /// Поле индекса стека операторов
+        /// </summary>
         int inOper = -1;
+        /// <summary>
+        /// 
+        /// </summary>
         List<Token> dopPer = new List<Token>(10);
+        /// <summary>
+        /// Поле стека дополнительных операндов
+        /// </summary>
         int inDop = -1;
+        /// <summary>
+        /// Поле временного токена
+        /// </summary>
         Token temp = new Token("","",-1);
+        /// <summary>
+        /// Поле массива значений
+        /// </summary>
         int[] znach = new int[100];
+        /// <summary>
+        /// Поле индекса массива значений
+        /// </summary>
         int inZnach = 0;
+        /// <summary>
+        /// Поле строки сообщения
+        /// </summary>
         string mess = " ";
 
-        //для генерации
-        string op1, op, op2;//простая логика
-        string OpID, opi; //икремент декремент
+        /// <summary>
+        /// Поле строки первого операнда для сравнения
+        /// Поле строки оператора для сравнения
+        /// Поле строки второго операнда для сравнения
+        /// </summary>
+        string op1, op, op2;
+        /// <summary>
+        /// Поле строки инкремента/декремента
+        /// Поле строки индекса для инкремента/декремента
+        /// </summary>
+        string OpID, opi;
+
+        /// <summary>
+        /// Конструктор класса SintacsisLL
+        /// </summary>
+        /// <param name="tokens"></param>
+        /// <param name="listBox"></param>
+        /// <param name="listBox2"></param>
+        /// <param name="listView2"></param>
+        /// <param name="listView3"></param>
         public SintacsisLL(List<Token> tokens, ListBox listBox = null, ListBox listBox2 = null, ListView listView2=null, ListView listView3 = null)
         {
             this.listBox = listBox;
@@ -50,6 +127,11 @@ namespace task
             int x = prog();//вызываем самую первую программу
         }
 
+        /// <summary>
+        /// Метод обработчик синтаксических ошибок
+        /// </summary>
+        /// <param name="kod"></param>
+        /// <param name="index"></param>
         private void Error(int kod, int index)//обработчик ошибок
         {
             string errorMessage = $"Синтаксическая ошибка #{kod} на позиции {index}: ";
@@ -138,6 +220,11 @@ namespace task
             }
         }
 
+        /// <summary>
+        /// Метод, возвращающий тип токена на русском языке
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns>Строка тип токена на русском языке</returns>
         private string GetRussianTokenType(string type)
         {
             switch (type)
@@ -155,6 +242,11 @@ namespace task
             }
         }
 
+        /// <summary>
+        /// Метод обработчик семантических ошибок
+        /// </summary>
+        /// <param name="kod"></param>
+        /// <param name="index"></param>
         private void Error2(int kod, int index)//обработчик ошибок
         {
             string errorMessage = $"Семантическая ошибка #{kod}";
@@ -185,6 +277,10 @@ namespace task
             }
         }
 
+        /// <summary>
+        /// Метод, запускающий синтаксический анализ
+        /// </summary>
+        /// <returns>Код ошибки</returns>
         public int prog()
         {
             int kod = -1;
@@ -239,8 +335,11 @@ namespace task
             return -1;//ошибка в случае успеха
         }
 
-
-
+        /// <summary>
+        /// Метод, обрабатывающий список операторов
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int spis_oper(ref int index)
         {
             int kod = oper(ref index);
@@ -251,6 +350,11 @@ namespace task
             return kod;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий операторы
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int oper(ref int index)
         {
 
@@ -279,12 +383,9 @@ namespace task
                 }
                 temp = Tokens[index];
 
-
                 index++;
                 kod = V(ref index);
                 if (kod >= 0) return kod;
-
-
 
                 if (!(Tokens[index].Type == "R" && Tokens[index].Number == 5)) // ;
                 {
@@ -318,7 +419,6 @@ namespace task
                     Error2(40, index); return 40;
                 }
                 temp = Tokens[index];
-
 
                 index++;
                 kod = V(ref index);
@@ -405,6 +505,11 @@ namespace task
             Error(9, index); return 9;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий вторую часть списка операторов
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int X(ref int index)
         {
             //проверка на эпсилон
@@ -417,6 +522,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий продолжение идентификатора 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int B(ref int index)
         {
             int kod = -1;
@@ -452,8 +562,6 @@ namespace task
                 newItem.SubItems.Add(" ");  //четвертый столбец результат                                      
                 listView2.Items.Add(newItem);// Добавляем строку в listView2
 
-                
-
                 inPer = -1;
                 inOper = -1;
                 inDop = -1;
@@ -470,6 +578,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий присваивания значения
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int V(ref int index)
         {
             int kod = -1;
@@ -513,8 +626,6 @@ namespace task
                 newItem.SubItems.Add(" ");  //четвертый столбец результат                                      
                 listView2.Items.Add(newItem);// Добавляем строку в listView2
 
-
-
                 znach[temp.Number] = (int.Parse(stekPer[inPer].Value));
                 inZnach++;
 
@@ -530,7 +641,11 @@ namespace task
         }
 
 
-
+        /// <summary>
+        /// Метод, обрабатывающий инкремент/декремент
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int A(ref int index)
         {
             int kod = -1;
@@ -559,6 +674,11 @@ namespace task
             Error(25, index); return 25;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий выражение
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int bir(ref int index)
         {
             int kod = slag(ref index);
@@ -569,6 +689,11 @@ namespace task
             return kod;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий вторую часть выражения
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int Y(ref int index)
         {
             int kod = -1;
@@ -584,6 +709,11 @@ namespace task
             Error(14, index); return 14;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий сложение/вычитание
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int bir2(ref int index)
         {
             int kod = -1;
@@ -708,6 +838,11 @@ namespace task
             Error(19, index); return 19;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий слагаемое
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int slag(ref int index)
         {
             int kod = fact(ref index);
@@ -718,6 +853,11 @@ namespace task
             return kod;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий вторую часть слагаемого
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int Z(ref int index)
         {
             int kod = -1;
@@ -732,6 +872,11 @@ namespace task
             Error(16, index); return 16;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий умножение/деление/остаток
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int slag2(ref int index)
         {
             int kod = -1;
@@ -901,6 +1046,11 @@ namespace task
             Error(17, index); return 17;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий факториал
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int fact(ref int index)
         {
             int kod = -1;
@@ -935,8 +1085,11 @@ namespace task
             return -1;
         }
 
-
-
+        /// <summary>
+        /// Метод, обрабатывающий элемент
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int elem(ref int index)
         {
 
@@ -949,6 +1102,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий цикл
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int cicl(ref int index)
         {
             if (!(Tokens[index].Type == "SW" && Tokens[index].Number == 3)) // for
@@ -1002,6 +1160,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий арифметическое выражение в цикле
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int arif_cicl(ref int index)
         {
             int kod = -1;
@@ -1121,6 +1284,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий простое логическое выражение в цикле
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int prost_log(ref int index)
         {
             listView3.Items.Add("  Условие выхода из цикла");
@@ -1128,6 +1296,7 @@ namespace task
 
             if (Tokens[index].Type == "R" && Tokens[index].Number == 5) // ;
             {
+                index++;
                 listView3.Items.Add("   Условие не задано");
                 return -1;
             }
@@ -1146,8 +1315,6 @@ namespace task
                 op = Tokens[index].Value;
                 kod = log_deisiv(ref index);
                 if (kod >= 0) return kod;
-
-
 
                 mes += Tokens[index].Value;
                 listView3.Items.Add("   "+mes);
@@ -1169,6 +1336,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий логический оператор
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int log_deisiv(ref int index)
         {
             if ((Tokens[index].Type == "R" && Tokens[index].Number == 11)) // >
@@ -1207,6 +1379,11 @@ namespace task
 
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий инкремент/декремент в цикле
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int ikdek_cicle(ref int index)
         {
             listView3.Items.Add("  Изменение переменной");
@@ -1272,6 +1449,11 @@ namespace task
             return -1;
         }
 
+        /// <summary>
+        /// Метод, обрабатывающий блок
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns>Код ошибки</returns>
         private int bloc(ref int index)
         {
             int kod = -1;
@@ -1300,6 +1482,13 @@ namespace task
             }
         }
 
+        /// <summary>
+        /// Метод, сравнивающий значения
+        /// </summary>
+        /// <param name="op1"></param>
+        /// <param name="op"></param>
+        /// <param name="op2"></param>
+        /// <returns>true/false</returns>
         public static bool CompareValues(string op1, string op, string op2)
         {
             // Сначала пробуем распарсить как long
@@ -1331,6 +1520,11 @@ namespace task
             return true;
         }
 
+        /// <summary>
+        /// Метод, выполняющий инкремент/декремент
+        /// </summary>
+        /// <param name="number"></param>
+        /// <param name="operation"></param>
         public void IkrementDicrement(string number, string operation)
         {
 
