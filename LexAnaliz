@@ -7,18 +7,41 @@ namespace task
 {
     public class Token
     {
-        public string Type { get; set; } // Тип токена
-        public string Value { get; set; } // Значение токена
-        public int Number { get; set; } //Номер токена
+        /// <summary>
+        /// Свойство тип токена
+        /// </summary>
+        public string Type { get; set; }
+        /// <summary>
+        /// Свойство значение токена
+        /// </summary>
+        public string Value { get; set; }
+        /// <summary>
+        /// Свойство номер токена
+        /// </summary>
+        public int Number { get; set; }
+        /// <summary>
+        /// Свойство название дополнительной операции
+        /// </summary>
         public string Oper { get; set; }
-
+        /// <summary>
+        /// Конструктор класса Token
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
+        /// <param name="number"></param>
         public Token(string type, string value, int number = -1)
         {
             Type = type;
             Value = value;
             Number = number;
         }
-
+        /// <summary>
+        /// Конструктор класса Token
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="oper"></param>
+        /// <param name="value"></param>
+        /// <param name="number"></param>
         public Token(string type, string oper, string value, int number = -1)
         {
             Type = type;
@@ -26,7 +49,10 @@ namespace task
             Value = value;
             Number = number;
         }
-
+        /// <summary>
+        /// Метод, выводящий данные о лексеме
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return $"({Type}, {Number})";
@@ -38,58 +64,106 @@ namespace task
         public LexAnaliz()
         { }
 
-
+        /// <summary>
+        /// Поле, определяющее состояние анализатора
+        /// </summary>
         enum State { S, I, H, R, D } // Состояния: S - начальное, I - идентификатор, H - шестнадцатеричное число, R - разделитель, D - десятичное число
 
-        // Проверка, является ли символ английской буквой
+        /// <summary>
+        /// Метод, определяющий является ли входной символ английской буквой
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool IsEnglishLetter(char c)
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
 
-        // Проверка, является ли символ шестнадцатеричной цифрой
+        /// <summary>
+        /// Метод, определяющий является ли входной символ шестнадцатеричной цифрой
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool IsHexDigit(char c)
         {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
-        // Проверка, является ли символ десятичной цифрой
+        /// <summary>
+        /// Метод, определяющий является ли входной символ десятичной цифрой
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool IsDecimalDigit(char c)
         {
             return (c >= '0' && c <= '9');
         }
 
-        // Проверка, является ли символ пробелом
+        /// <summary>
+        /// Метод, определяющий является ли входной символ пробелом
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool IsWhiteSpace(char c)
         {
             return c == ' ' || c == '\t' || c == '\n' || c == '\r';
         }
 
-        // Проверка, является ли символ буквой или цифрой
+        /// <summary>
+        /// Метод, определяющий является ли входной символ буквой или цифрой
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool IsLetterOrDigit(char c)
         {
             return IsEnglishLetter(c) || IsHexDigit(c);
         }
 
-        // Проверка, является ли начало строки шестнадцатеричным числом
+        /// <summary>
+        /// Метод, определяющий является ли начало строки шестнадцатеричным числом
+        /// </summary>
+        /// <param name="inputString"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
         private static bool IsHexDigitStart(string inputString, int index)
         {
             return inputString[index] == '0' && index + 1 < inputString.Length && (inputString[index + 1] == 'x' || inputString[index + 1] == 'X');
-        }
-
+        } 
+        /// <summary>
+        /// Поле массива служебных слов
+        /// </summary>
         //                                            0       1       2      3       4
-        private static readonly string[] SlWord = { "main", "int", "long", "for", "return" }; // Служебные слова //SW
-                                //                         0    1    2    3    4    5    6    7    8 
-        private static readonly string[] SingleRazdel = { "(", ")", "{", "}", ",", ";", "*", "/", "%" }; // Одиночные разделители //R
+        private static readonly string[] SlWord = { "main", "int", "long", "for", "return" }; 
+        /// <summary>
+        /// Поле массива одиночных разделителей
+        /// </summary>                        
+                 //                                        0    1    2    3    4    5    6    7    8
+        private static readonly string[] SingleRazdel = { "(", ")", "{", "}", ",", ";", "*", "/", "%" }; 
+        /// <summary>
+        /// Поле массива потенциально парных разделителей
+        /// </summary>
                                 //                       9    10   11   12   13   14     
-        private static readonly string[] ParnRazdel = { "+", "-", ">", "<", "=", "!" }; // Потенциально парные разделители  //R
+        private static readonly string[] ParnRazdel = { "+", "-", ">", "<", "=", "!" };                                                                       
+        /// <summary>
+        /// Поле массива составных разделителей
+        /// </summary>
                                 //                      15    16    17    18    19     20 
-        private static readonly string[] TwoRazdel = { "++", "--", "<=", ">=", "==", "!=" }; // Составные разделители //R
+        private static readonly string[] TwoRazdel = { "++", "--", "<=", ">=", "==", "!=" }; 
 
-        // Таблицы для хранения идентификаторов и литералов
+        /// <summary>
+        /// Поле списка идентификаторов
+        /// </summary>
         public static readonly List<string> Identifiers = new List<string>();
+        /// <summary>
+        /// Поле списка литералов
+        /// </summary>
         public static readonly List<string> Literals = new List<string>();
-
+        /// <summary>
+        /// Метод обработчик ошибок
+        /// </summary>
+        /// <param name="kod"></param>
+        /// <param name="index"></param>
+        /// <param name="listBox3"></param>
         public void Error(int kod, int index, ListBox listBox3)//обработчик ошибок
         {
             string errorMessage = $"Лексическая ошибка #{kod} на позиции {index}: ";
@@ -117,7 +191,12 @@ namespace task
             }
         }
 
-
+        /// <summary>
+        /// Метод, запускающий работу лексического анализатора 
+        /// </summary>
+        /// <param name="inputString"></param>
+        /// <param name="listBox3"></param>
+        /// <returns></returns>
         public static List<Token> InterpString(string inputString, ListBox listBox3)
         {
             List<Token> Tokens = new List<Token>(); // Список для хранения токенов
