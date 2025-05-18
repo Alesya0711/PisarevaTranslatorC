@@ -23,7 +23,7 @@ namespace task
         /// </summary>
         private SintacsisLL sintacsisLL;
 
-        ///
+        
         public Form1()
         {
             InitializeComponent();
@@ -70,8 +70,8 @@ namespace task
         /// <summary>
         /// Метод обработчик события клика на кнопку “Анализировать” 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Ссылка на объект, вызвавший событие</param>
+        /// <param name="e">Аргументы, содержащие данные о событии</param>
         private void button1_Click(object sender, EventArgs e)
         {
             AnalyzeText(); // Выполняем лексический анализ
@@ -79,8 +79,8 @@ namespace task
         /// <summary>
         /// Метод обработчик события клика на кнопку “Загрузить файл” 
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Ссылка на объект, вызвавший событие</param>
+        /// <param name="e">Аргументы, содержащие данные о событии</param>
         private void button2_Click(object sender, EventArgs e)
         {
             // Открытие диалога выбора файла
@@ -112,5 +112,3 @@ namespace task
         }
     }
 }
-
-
