@@ -105,11 +105,11 @@ namespace task
         /// <summary>
         /// Конструктор класса SintacsisLL
         /// </summary>
-        /// <param name="tokens"></param>
-        /// <param name="listBox"></param>
-        /// <param name="listBox2"></param>
-        /// <param name="listView2"></param>
-        /// <param name="listView3"></param>
+        /// <param name="tokens">Список токенов, полученный в результате лексического анализа</param>
+        /// <param name="listBox">Поле списка для вывода синтаксических ошибок</param>
+        /// <param name="listBox2">Поле списка для вывода семантических ошибок</param>
+        /// <param name="listView2">Поле списка для вывода результатов операций </param>
+        /// <param name="listView3">Поле списка для вывода сообщений о выполнении программы</param>
         public SintacsisLL(List<Token> tokens, ListBox listBox = null, ListBox listBox2 = null, ListView listView2=null, ListView listView3 = null)
         {
             this.listBox = listBox;
@@ -130,8 +130,8 @@ namespace task
         /// <summary>
         /// Метод обработчик синтаксических ошибок
         /// </summary>
-        /// <param name="kod"></param>
-        /// <param name="index"></param>
+        /// <param name="kod">Код ошибки</param>
+        /// <param name="index">Индекс ошибки </param>
         private void Error(int kod, int index)//обработчик ошибок
         {
             string errorMessage = $"Синтаксическая ошибка #{kod} на позиции {index}: ";
@@ -223,8 +223,8 @@ namespace task
         /// <summary>
         /// Метод, возвращающий тип токена на русском языке
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns>Строка тип токена на русском языке</returns>
+        /// <param name="type">Тип токена</param>
+        /// <returns>string</returns>
         private string GetRussianTokenType(string type)
         {
             switch (type)
@@ -245,8 +245,8 @@ namespace task
         /// <summary>
         /// Метод обработчик семантических ошибок
         /// </summary>
-        /// <param name="kod"></param>
-        /// <param name="index"></param>
+        /// <param name="kod">Код ошибки</param>
+        /// <param name="index">Индекс ошибки</param>
         private void Error2(int kod, int index)//обработчик ошибок
         {
             string errorMessage = $"Семантическая ошибка #{kod}";
@@ -338,7 +338,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий список операторов
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int spis_oper(ref int index)
         {
@@ -353,7 +353,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий операторы
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int oper(ref int index)
         {
@@ -508,7 +508,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий вторую часть списка операторов
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int X(ref int index)
         {
@@ -525,7 +525,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий продолжение идентификатора 
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int B(ref int index)
         {
@@ -581,7 +581,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий присваивания значения
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int V(ref int index)
         {
@@ -644,7 +644,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий инкремент/декремент
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int A(ref int index)
         {
@@ -677,7 +677,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий выражение
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int bir(ref int index)
         {
@@ -692,7 +692,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий вторую часть выражения
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int Y(ref int index)
         {
@@ -712,7 +712,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий сложение/вычитание
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int bir2(ref int index)
         {
@@ -841,7 +841,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий слагаемое
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int slag(ref int index)
         {
@@ -856,7 +856,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий вторую часть слагаемого
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int Z(ref int index)
         {
@@ -875,7 +875,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий умножение/деление/остаток
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int slag2(ref int index)
         {
@@ -1049,7 +1049,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий факториал
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int fact(ref int index)
         {
@@ -1088,7 +1088,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий элемент
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int elem(ref int index)
         {
@@ -1105,7 +1105,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий цикл
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int cicl(ref int index)
         {
@@ -1163,7 +1163,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий арифметическое выражение в цикле
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int arif_cicl(ref int index)
         {
@@ -1287,7 +1287,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий простое логическое выражение в цикле
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int prost_log(ref int index)
         {
@@ -1339,7 +1339,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий логический оператор
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int log_deisiv(ref int index)
         {
@@ -1382,7 +1382,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий инкремент/декремент в цикле
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int ikdek_cicle(ref int index)
         {
@@ -1452,7 +1452,7 @@ namespace task
         /// <summary>
         /// Метод, обрабатывающий блок
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">Индекс текущего токена </param>
         /// <returns>Код ошибки</returns>
         private int bloc(ref int index)
         {
@@ -1485,10 +1485,10 @@ namespace task
         /// <summary>
         /// Метод, сравнивающий значения
         /// </summary>
-        /// <param name="op1"></param>
-        /// <param name="op"></param>
-        /// <param name="op2"></param>
-        /// <returns>true/false</returns>
+        /// <param name="op1">Первый операнд</param>
+        /// <param name="op">Оператор</param>
+        /// <param name="op2">Второй операнд</param>
+        /// <returns>bool</returns>
         public static bool CompareValues(string op1, string op, string op2)
         {
             // Сначала пробуем распарсить как long
@@ -1523,8 +1523,8 @@ namespace task
         /// <summary>
         /// Метод, выполняющий инкремент/декремент
         /// </summary>
-        /// <param name="number"></param>
-        /// <param name="operation"></param>
+        /// <param name="number">Индекс переменной</param>
+        /// <param name="operation">Операция (инкремент или декремент) </param>
         public void IkrementDicrement(string number, string operation)
         {
 
