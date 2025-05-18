@@ -26,9 +26,9 @@ namespace task
         /// <summary>
         /// Конструктор класса Token
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        /// <param name="number"></param>
+        /// <param name="type">Тип токена</param>
+        /// <param name="value">Значение токена</param>
+        /// <param name="number">Номер токена в таблице </param>
         public Token(string type, string value, int number = -1)
         {
             Type = type;
@@ -38,10 +38,10 @@ namespace task
         /// <summary>
         /// Конструктор класса Token
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="oper"></param>
-        /// <param name="value"></param>
-        /// <param name="number"></param>
+        /// <param name="type">Тип токена</param>
+        /// <param name="oper">Название дополнительной операции </param>
+        /// <param name="value">Значение токена</param>
+        /// <param name="number">Номер токена в таблице </param>
         public Token(string type, string oper, string value, int number = -1)
         {
             Type = type;
@@ -52,7 +52,7 @@ namespace task
         /// <summary>
         /// Метод, выводящий данные о лексеме
         /// </summary>
-        /// <returns></returns>
+        /// <returns>String</returns>
         public override string ToString()
         {
             return $"({Type}, {Number})";
@@ -72,8 +72,8 @@ namespace task
         /// <summary>
         /// Метод, определяющий является ли входной символ английской буквой
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
+        /// <param name="c">Входной символ </param>
+        /// <returns>bool</returns>
         private static bool IsEnglishLetter(char c)
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
@@ -92,8 +92,8 @@ namespace task
         /// <summary>
         /// Метод, определяющий является ли входной символ десятичной цифрой
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
+        /// <param name="c">Входной символ </param>
+        /// <returns>bool</returns>
         private static bool IsDecimalDigit(char c)
         {
             return (c >= '0' && c <= '9');
@@ -102,8 +102,8 @@ namespace task
         /// <summary>
         /// Метод, определяющий является ли входной символ пробелом
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
+        /// <param name="c">Входной символ </param>
+        /// <returns>bool</returns>
         private static bool IsWhiteSpace(char c)
         {
             return c == ' ' || c == '\t' || c == '\n' || c == '\r';
@@ -112,8 +112,8 @@ namespace task
         /// <summary>
         /// Метод, определяющий является ли входной символ буквой или цифрой
         /// </summary>
-        /// <param name="c"></param>
-        /// <returns></returns>
+        /// <param name="c">Входной символ </param>
+        /// <returns>bool</returns>
         private static bool IsLetterOrDigit(char c)
         {
             return IsEnglishLetter(c) || IsHexDigit(c);
@@ -122,9 +122,9 @@ namespace task
         /// <summary>
         /// Метод, определяющий является ли начало строки шестнадцатеричным числом
         /// </summary>
-        /// <param name="inputString"></param>
-        /// <param name="index"></param>
-        /// <returns></returns>
+        /// <param name="inputString">Входная строка </param>
+        /// <param name="index">Индекс  символа в строке</param>
+        /// <returns>bool</returns>
         private static bool IsHexDigitStart(string inputString, int index)
         {
             return inputString[index] == '0' && index + 1 < inputString.Length && (inputString[index + 1] == 'x' || inputString[index + 1] == 'X');
@@ -161,9 +161,9 @@ namespace task
         /// <summary>
         /// Метод обработчик ошибок
         /// </summary>
-        /// <param name="kod"></param>
-        /// <param name="index"></param>
-        /// <param name="listBox3"></param>
+        /// <param name="kod">Код ошибки</param>
+        /// <param name="index">Индекс ошибки </param>
+        /// <param name="listBox3">Элемент управления для вывода ошибок</param>
         public void Error(int kod, int index, ListBox listBox3)//обработчик ошибок
         {
             string errorMessage = $"Лексическая ошибка #{kod} на позиции {index}: ";
@@ -194,9 +194,9 @@ namespace task
         /// <summary>
         /// Метод, запускающий работу лексического анализатора 
         /// </summary>
-        /// <param name="inputString"></param>
-        /// <param name="listBox3"></param>
-        /// <returns></returns>
+        /// <param name="inputString">Входящая строка кода </param>
+        /// <param name="listBox3">Элемент управления для вывода ошибок</param>
+        /// <returns>List<Token></returns>
         public static List<Token> InterpString(string inputString, ListBox listBox3)
         {
             List<Token> Tokens = new List<Token>(); // Список для хранения токенов
